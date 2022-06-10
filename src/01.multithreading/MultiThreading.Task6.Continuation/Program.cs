@@ -150,11 +150,12 @@ namespace MultiThreading.Task6.Continuation
                 PrintCurrentThread("Child ");
                 Console.WriteLine($"Parent task status: {t.Status}");
             },
-            CancellationToken.None,
-            TaskContinuationOptions.OnlyOnCanceled,
-            scheduler: CustomScheduler);
+            //CancellationToken.None,
+            TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.LongRunning
+            //scheduler: CustomScheduler
+            );
 
-            ct.CancelAfter(1000);
+            ct.CancelAfter(500);
 
             return task;
         }
