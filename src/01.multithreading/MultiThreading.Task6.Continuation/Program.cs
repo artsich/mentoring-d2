@@ -14,6 +14,8 @@ namespace MultiThreading.Task6.Continuation
 {
     class Program
     {
+        private static CustomTaskScheduler CustomScheduler = new CustomTaskScheduler();
+
         static void Main(string[] args)
         {
             Console.WriteLine("Create a Task and attach continuations to it according to the following criteria:");
@@ -31,7 +33,7 @@ namespace MultiThreading.Task6.Continuation
 
         private static void Process()
         {
-            void Info()
+            static void Info()
             {
                 Console.WriteLine("Use A, B, C or D key to run the case!");
             }
@@ -39,10 +41,10 @@ namespace MultiThreading.Task6.Continuation
             Info();
 
             ConsoleKeyInfo c;
-            while((c = Console.ReadKey()).Key != ConsoleKey.Escape)
+            while ((c = Console.ReadKey()).Key != ConsoleKey.Escape)
             {
                 Console.WriteLine();
- 
+
                 Task task = default;
                 switch (c.Key)
                 {
@@ -53,17 +55,17 @@ namespace MultiThreading.Task6.Continuation
                         }
                     case ConsoleKey.B:
                         {
-                            WhenParentSuccess();
+                            task = WhenParentSuccess();
                             break;
                         }
                     case ConsoleKey.C:
                         {
-                            ReuseParentTask();
+                            task = ReuseParentTask();
                             break;
                         }
                     case ConsoleKey.D:
                         {
-                            OutsideOfTheThreadPool();
+                            task = OutsideOfTheThreadPool();
                             break;
                         }
                     default:
@@ -71,7 +73,14 @@ namespace MultiThreading.Task6.Continuation
                         break;
                 }
 
-                task?.Wait();
+                try
+                {
+                    task?.Wait();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
             }
         }
 
@@ -107,8 +116,7 @@ namespace MultiThreading.Task6.Continuation
 
             return Task.Run(() =>
             {
-                Console.WriteLine("Thread number: " + Thread.CurrentThread.ManagedThreadId);
-
+                PrintCurrentThread();
                 // help check that child is runnig on the same thread
                 //
                 // Thread.Sleep(3000); 
@@ -117,7 +125,7 @@ namespace MultiThreading.Task6.Continuation
             })
             .ContinueWith((t) =>
             {
-                Console.WriteLine("Thread number: " + Thread.CurrentThread.ManagedThreadId);
+                PrintCurrentThread();
             },
             TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
         }
@@ -128,39 +136,32 @@ namespace MultiThreading.Task6.Continuation
 
             var ct = new CancellationTokenSource();
             var token = ct.Token;
-            ct.Cancel();
 
             var task = Task.Run(() =>
             {
-                Thread.Sleep(1000);
-                token.ThrowIfCancellationRequested();
+                PrintCurrentThread("Parent ");
+                while (true)
+                {
+                    token.ThrowIfCancellationRequested();
+                }
             }, token)
-            .ContinueWith((t) => 
+            .ContinueWith((t) =>
             {
-                Console.Write($"Parent task status: {t.Status}");
-            }, 
-            TaskContinuationOptions.OnlyOnCanceled, scheduler: );
-            
+                PrintCurrentThread("Child ");
+                Console.WriteLine($"Parent task status: {t.Status}");
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnCanceled,
+            scheduler: CustomScheduler);
+
+            ct.CancelAfter(1000);
 
             return task;
         }
-    }
 
-    public class CustomTaskScheduler : TaskScheduler
-    {
-        protected override IEnumerable<Task> GetScheduledTasks()
+        static void PrintCurrentThread(string tag = "")
         {
-
-        }
-
-        protected override void QueueTask(Task task)
-        {
-
-        }
-
-        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
-        {
-
+            Console.WriteLine(tag + "Thread number: " + Thread.CurrentThread.ManagedThreadId);
         }
     }
 }
