@@ -8,6 +8,8 @@
 */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens;
 
@@ -46,16 +48,31 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void CalculateSum(int n)
+    private static async void CalculateSum(int n)
     {
         // todo: make calculation asynchronous
-        var sum = Calculator.Calculate(n);
-        Console.WriteLine($"Sum for {n} = {sum}.");
-        Console.WriteLine();
-        Console.WriteLine("Enter N: ");
-        // todo: add code to process cancellation and uncomment this line    
-        // Console.WriteLine($"Sum for {n} cancelled...");
+        var cts = new CancellationTokenSource();
+
+        var sumTask = Task.Run(() => Calculator.Calculate(n, cts.Token), cts.Token);
 
         Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+
+        if (Console.ReadKey().Key == ConsoleKey.N)
+        {
+            cts.Cancel();
+        }
+
+        Console.WriteLine();
+
+        try
+        {
+            var sum = await sumTask;
+            Console.WriteLine($"Sum for {n} = {sum}.");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"Sum for {n} cancelled...");
+            Console.WriteLine($"Input new N: ");
+        }
     }
 }

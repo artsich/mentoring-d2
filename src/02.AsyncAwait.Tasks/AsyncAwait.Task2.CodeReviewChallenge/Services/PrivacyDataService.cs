@@ -6,7 +6,10 @@ public class PrivacyDataService : IPrivacyDataService
 {
     public Task<string> GetPrivacyDataAsync()
     {
-        return new ValueTask<string>("This Policy describes how async/await processes your personal data," +
-                                     "but it may not address all possible data processing scenarios.").AsTask();
+        return Task.FromResult("This Policy describes how async/await processes your personal data," +
+                                "but it may not address all possible data processing scenarios.");
+
+        //return new ValueTask<string>("This Policy describes how async/await processes your personal data," +
+        //                             "but it may not address all possible data processing scenarios.").AsTask();
     }
 }
