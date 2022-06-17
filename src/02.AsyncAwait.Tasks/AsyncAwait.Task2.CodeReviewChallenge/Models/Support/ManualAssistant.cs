@@ -24,9 +24,9 @@ public class ManualAssistant : IAssistant
             Thread.Sleep(5000); // this is just to be sure that the request is registered
             return await _supportService.GetSupportInfoAsync(requestInfo);
         }
-        catch
+        catch (HttpRequestException ex)
         {
-            return "Failed to register assistance request. Please try later. {ex.Message}";
+            return $"Failed to register assistance request. Please try later. {ex.Message}";
         }
     }
 }

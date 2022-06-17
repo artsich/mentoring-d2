@@ -50,7 +50,6 @@ internal class Program
 
     private static async void CalculateSum(int n)
     {
-        // todo: make calculation asynchronous
         var cts = new CancellationTokenSource();
 
         var sumTask = Task.Run(() => Calculator.Calculate(n, cts.Token), cts.Token);
