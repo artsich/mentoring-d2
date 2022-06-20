@@ -8,42 +8,10 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens;
-
-internal class ConsoleNumberReader
-{
-    private readonly List<char> buff = new();
-
-    public bool TryGetNumber(out int value)
-    {
-        value = int.MinValue;
-
-        if (!Console.KeyAvailable)
-            return false;
-
-        var key = Console.ReadKey();
-
-        if (char.IsDigit(key.KeyChar))
-        {
-            buff.Add(key.KeyChar);
-        }
-        else if (key.Key == ConsoleKey.Enter)
-        {
-            var span = CollectionsMarshal.AsSpan(buff);
-            value = int.Parse(new string(span));
-            buff.Clear();
-
-            return true;
-        }
-
-        return false;
-    }
-}
 
 internal class Program
 {
@@ -80,65 +48,31 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static Task TryStopCalculation(CancellationToken inputCt, Action<int> onRead)
+    static Task<long> sumTask = null;
+    static CancellationTokenSource cts = new();
+
+    private static async void CalculateSum(int n)
     {
-        return Task.Run(() =>
+        if (sumTask != null)
         {
-            var reader = new ConsoleNumberReader();
-            while (!inputCt.IsCancellationRequested)
-            {
-                if (reader.TryGetNumber(out var value))
-                {
-                    onRead?.Invoke(value);
-                    break;
-                }
-            }
-        },
-        inputCt);
-    }
+            cts.Cancel();
+        }
 
-    private static void CalculateSum(int n)
-    {
-        Task.Run(async () =>
+        cts = new CancellationTokenSource();
+        sumTask = Task.Run(() => Calculator.Calculate(n, cts.Token), cts.Token);
+
+        Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+        try
         {
-            var finised = false;
-            var processingNubmer = n;
-            var newProcessingNumber = n;
-            while (!finised)
-            {
-                processingNubmer = newProcessingNumber;
+            var sum = await sumTask;
 
-                var calculationTokenSource = new CancellationTokenSource();
-                var inputCts = new CancellationTokenSource();
-
-                var sumTask = Calculate(processingNubmer, calculationTokenSource.Token);
-
-                Console.WriteLine($"The task for {processingNubmer} started... Enter N to cancel the request:");
-
-                _ = TryStopCalculation(inputCts.Token, (value) =>
-                {
-                    calculationTokenSource.Cancel();
-                    newProcessingNumber = value;
-                });
-
-                try
-                {
-                    var sum = await sumTask;
-                    Console.WriteLine($"Sum for {processingNubmer} = {sum}.");
-                    finised = true;
-                }
-                catch (OperationCanceledException)
-                {
-                    Console.WriteLine($"Sum for {processingNubmer} cancelled...");
-                }
-
-                inputCts.Cancel();
-            }
-        }).GetAwaiter().GetResult();
-    }
-
-    private static Task<long> Calculate(int n, CancellationToken ct)
-    {
-        return Task.Run(() => Calculator.Calculate(n, ct), ct);
+            Console.WriteLine($"Sum for {n} = {sum}.");
+            Console.WriteLine();
+            Console.WriteLine("Enter N: ");
+        }
+        catch (OperationCanceledException) 
+        {
+            Console.WriteLine($"Sum for {n} cancelled...");
+        }
     }
 }
