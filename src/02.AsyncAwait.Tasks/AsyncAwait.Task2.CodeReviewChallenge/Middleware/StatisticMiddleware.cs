@@ -26,7 +26,6 @@ public class StatisticMiddleware
         await _statisticService.RegisterVisitAsync(path);
         await UpdateHeaders(context, path);
 
-        Thread.Sleep(3000); // without this the statistic counter does not work
         await _next(context);
     }
 
