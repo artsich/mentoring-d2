@@ -48,23 +48,22 @@ internal class Program
         Console.ReadLine();
     }
 
-    static Task<long> sumTask = null;
-    static CancellationTokenSource cts = new();
+    static CancellationTokenSource cts;
 
     private static async void CalculateSum(int n)
     {
-        if (sumTask != null)
+        if (cts != null)
         {
             cts.Cancel();
         }
 
         cts = new CancellationTokenSource();
-        sumTask = Task.Run(() => Calculator.Calculate(n, cts.Token), cts.Token);
 
         Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
         try
         {
-            var sum = await sumTask;
+            var sum = await Task.Run(() => Calculator.Calculate(n, cts.Token), cts.Token);
+            cts = null;
 
             Console.WriteLine($"Sum for {n} = {sum}.");
             Console.WriteLine();
