@@ -16,7 +16,7 @@ var options1 = new ListenOptions()
 var options2 = new ListenOptions()
 {
 	Folder = ".\\ListenFolder",
-	Filter = "*.mp3"
+	Filter = "*.pdf"
 };
 
 var receivedFolderPath = ".\\Received";

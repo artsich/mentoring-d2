@@ -17,12 +17,6 @@ public class MainProcessingService : IProcessingService
 	{
 		var message = await messageReceiver.Receive();
 
-		if (message == null)
-		{
-			Console.WriteLine("Wrong message received.");
-			return;
-		}
-
 		Console.WriteLine($"File is Received: " + message.FilePath);
 
 		if (message.Data is null || message.Data.Length == 0)

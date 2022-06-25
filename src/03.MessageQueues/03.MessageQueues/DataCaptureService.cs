@@ -23,6 +23,13 @@ public class DataCaptureService
 
 	private async void OnFileCreated(object sender, FileSystemEventArgs e)
 	{
-		await fileService.OnFileCreated(e.FullPath);
+		try
+		{
+			await fileService.OnFileCreated(e.FullPath);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex);
+		}
 	}
 }

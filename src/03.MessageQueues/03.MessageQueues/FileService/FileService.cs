@@ -13,6 +13,7 @@ public class FileService : IFileService
 
 	public async Task OnFileCreated(string filePath)
 	{
+		WaitUntillFileWillBeFree(filePath);
 		var bytes = await File.ReadAllBytesAsync(filePath);
 
 		try
@@ -23,6 +24,22 @@ public class FileService : IFileService
 		catch (Exception ex)
 		{
 			Console.WriteLine(ex);
+		}
+	}
+
+	private static void WaitUntillFileWillBeFree(string filePath)
+	{
+		while (true)
+		{
+			try
+			{
+				var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read);
+				fileStream.Close();
+				return;
+			}
+			catch (IOException ioException)
+			{
+			}
 		}
 	}
 }
