@@ -19,10 +19,17 @@ var options2 = new ListenOptions()
 	Filter = "*.mp3"
 };
 
+var options3 = new ListenOptions()
+{
+	Folder = ".\\ListenFolder",
+	Filter = "*.pdf"
+};
+
 var receivedFolderPath = ".\\Received";
 
 PrepareFolder(options1.Folder);
 PrepareFolder(options2.Folder);
+PrepareFolder(options3.Folder);
 PrepareFolder(receivedFolderPath);
 
 string connectionString = "Endpoint=sb://mentoringservicebus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=dQxwwtBpKQFZaw3sFNYgKKzR8V8yrqCUls2r8wAp3OU=";
@@ -32,9 +39,10 @@ await using var client = new ServiceBusClient(connectionString);
 
 GetCaptureService(options1).Run();
 GetCaptureService(options2).Run();
+GetCaptureService(options3).Run();
 
 var processingService = new MainProcessingService(
-	new MessageReceiver(client.CreateReceiver(queueName)),
+	new ChunkMessageReceiver(client.CreateReceiver(queueName)),
 	receivedFolderPath);
 
 while (true) 

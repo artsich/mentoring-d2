@@ -33,6 +33,6 @@ public class MainProcessingService : IProcessingService
 
 		var pathToSave = Path.Combine(folderToSave, Path.GetFileName(message.FilePath));
 
-		await File.WriteAllBytesAsync(pathToSave, message.Data);
+		await File.WriteAllTextAsync(pathToSave, message.Data);
 	}
 }
