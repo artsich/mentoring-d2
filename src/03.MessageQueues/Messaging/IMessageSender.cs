@@ -1,4 +1,4 @@
-﻿namespace _03.MessageQueues.Messaging
+﻿namespace Messaging
 {
 	public interface IMessageSender
 	{

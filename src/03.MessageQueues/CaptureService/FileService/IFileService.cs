@@ -1,4 +1,4 @@
-﻿namespace _03.MessageQueues.FileService;
+﻿namespace CaptureService.FileService;
 
 public interface IFileService
 {

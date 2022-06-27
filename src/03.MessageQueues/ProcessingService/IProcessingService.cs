@@ -1,4 +1,4 @@
-﻿namespace _03.MessageQueues.Processing;
+﻿namespace ProcessingService;
 
 public interface IProcessingService
 {

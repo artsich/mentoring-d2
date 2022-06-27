@@ -1,6 +1,6 @@
-﻿using _03.MessageQueues.FileService;
+﻿using CaptureService.FileService;
 
-namespace _03.MessageQueues;
+namespace CaptureService;
 
 public class DataCaptureService
 {
@@ -9,6 +9,8 @@ public class DataCaptureService
 
 	public DataCaptureService(ListenOptions options, IFileService fileService)
 	{
+		Directory.CreateDirectory(options.Folder);
+
 		watcher = new FileSystemWatcher(options.Folder);
 		watcher.Created += OnFileCreated;
 		watcher.Filter = options.Filter;
@@ -25,6 +27,7 @@ public class DataCaptureService
 	{
 		try
 		{
+			Console.WriteLine($"File by path {e.Name} created");
 			await fileService.OnFileCreated(e.FullPath);
 		}
 		catch (Exception ex)
