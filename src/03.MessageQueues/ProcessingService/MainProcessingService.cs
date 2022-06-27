@@ -19,7 +19,7 @@ public class MainProcessingService : IProcessingService
 	{
 		var chunk = await chunkReceiver.Receive();
 
-		Console.WriteLine($"Chunk by name {chunk.Name}, Count: {chunk.Count}, Number: {chunk.Number}, ");
+		Console.WriteLine($"Chunk by name {chunk.Name}, Count: {chunk.ChunksCount}, Number: {chunk.Number}, ");
 
 		if (chunk.Data is null || chunk.Data.Length == 0)
 		{

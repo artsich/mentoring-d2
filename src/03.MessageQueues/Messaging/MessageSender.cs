@@ -36,7 +36,7 @@ public class MessageSender : IMessageSender
 				Name = fileMessage.GetFileName(),
 				Number = i,
 				Offset = offset,
-				Count = chunksCount,
+				ChunksCount = chunksCount,
 				FullFileSize = data.Length,
 				Data = data[offset..(offset+splitSize)].ToArray(),
 			};
