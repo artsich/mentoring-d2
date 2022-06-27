@@ -46,7 +46,7 @@ public class MessageSender : IMessageSender
 
 			await sender.SendMessageAsync(message);
 
-			Console.WriteLine($"Chunk by number {chunkInfo.Number} sent!");
+			Console.WriteLine($"Chunk by number {chunkInfo.Number} is sent!");
 		}
 	}
 }

@@ -27,7 +27,7 @@ public class MainProcessingService : IProcessingService
 			return;
 		}
 
-		var pathToSave = Path.Combine(folderToSave, Path.GetFileName(chunk.Name));
+		var pathToSave = GetPathToSave(chunk.Name);
 
 		using (var fileWriter = File.OpenWrite(pathToSave))
 		{
@@ -41,4 +41,7 @@ public class MainProcessingService : IProcessingService
 			Console.WriteLine($"<<<<< File {chunk.Name} loaded! >>>>>");
 		}
 	}
+
+	private string GetPathToSave(string filename) => Path.Combine(folderToSave, Path.GetFileName(filename));
+
 }

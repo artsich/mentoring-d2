@@ -43,12 +43,16 @@ public class FileService : IFileService
 
 				break;
 			}
-			catch (IOException)
+			catch (PathTooLongException)
 			{
+				return false;
 			}
 			catch (UnauthorizedAccessException)
 			{
 				return false;
+			}
+			catch (IOException)
+			{
 			}
 		}
 
