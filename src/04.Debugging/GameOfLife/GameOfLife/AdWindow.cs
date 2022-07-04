@@ -26,7 +26,7 @@ namespace GameOfLife
             Cursor = Cursors.Hand;
             ShowActivated = false;
             MouseDown += OnClick;
-            
+
             imgNmb = rnd.Next(1, 3);
             ChangeAds(this, new EventArgs());
 
@@ -42,21 +42,15 @@ namespace GameOfLife
             System.Diagnostics.Process.Start(link);
             Close();
         }
-        
+
         protected override void OnClosed(EventArgs e)
         {
-            //Unsubscribe();
+            adTimer.Tick -= ChangeAds;
             base.OnClosed(e);
         } 
 
-        public void Unsubscribe()
-        {
-            adTimer.Tick -= ChangeAds;
-        }
-
         private void ChangeAds(object sender, EventArgs eventArgs)
         {
-            
             ImageBrush myBrush = new ImageBrush();
             
             switch (imgNmb)
