@@ -13,7 +13,6 @@ namespace GameOfLife
         private int imgNmb;     // the number of the image currently shown
         private string link;    // the URL where the currently shown ad leads to
         
-    
         public AdWindow(Window owner)
         {
             Random rnd = new Random();

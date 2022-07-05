@@ -63,10 +63,14 @@ namespace GameOfLife
             }
         }
 
-        private void OnTimer(object sender, EventArgs e)
+        private async void OnTimer(object sender, EventArgs e)
         {
-            mainGrid.Update();
-            genCounter++;
+			await System.Threading.Tasks.Task.
+				Run(() => mainGrid.Update());
+
+            mainGrid.Render();
+
+			genCounter++;
             lblGenCount.Content = "Generations: " + genCounter;
         }
 
