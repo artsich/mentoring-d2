@@ -7,7 +7,7 @@ namespace Password
         public static string GeneratePasswordHashUsingSaltMemoryOptimized(string passwordText, byte[] salt)
         {
             var iterate = 10000;
-            var pbkdf2 = new Rfc2898DeriveBytes(passwordText, salt, iterate);
+            var pbkdf2 = new Rfc2898DeriveBytes(passwordText, salt, iterate, HashAlgorithmName.SHA256);
             var hash = pbkdf2.GetBytes(20);
 
             Span<byte> hashBytes = stackalloc byte[36];
