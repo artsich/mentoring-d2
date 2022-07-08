@@ -20,8 +20,6 @@ namespace ProfileSample.Controllers
             var model = new List<ImageModel>();
             foreach (var item in sources)
             {
-//                var item = context.ImgSources.Find(id);
-
                 var obj = new ImageModel()
                 {
                     Name = item.Name,
