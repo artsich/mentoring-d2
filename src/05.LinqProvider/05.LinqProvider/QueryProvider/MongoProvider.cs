@@ -1,4 +1,8 @@
-﻿using MongoDB.Driver;
+﻿using _05.LinqProvider.Helpers;
+using _05.LinqProvider.Translator;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using System.Linq.Expressions;
 
 namespace _05.LinqProvider.QueryProvider;
@@ -29,8 +33,15 @@ public class MongoProvider : IQueryProvider
 
 	public TResult Execute<TResult>(Expression expression)
 	{
-		var collection = db.GetCollection<TResult>(typeof(TResult).Name);
+		Type itemType = TypeHelper.GetElementType(expression.Type);
 
-		throw new NotImplementedException();
+		var collection = db.GetCollection<BsonDocument>(typeof(TResult).Name);
+		var query = new ExpressionToBsonTranslator()
+			.Translate(expression);
+
+		return (TResult)collection
+			.Find(query)
+			.ToList()
+			.Select(x => BsonSerializer.Deserialize(x, itemType));
 	}
 }

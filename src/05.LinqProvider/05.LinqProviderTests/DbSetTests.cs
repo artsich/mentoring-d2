@@ -17,7 +17,7 @@ public class DbSetTests
 		mongoSettings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
 		var mongoClient = new MongoClient(mongoSettings);
 
-		db = mongoClient.GetDatabase("DbName");
+		db = mongoClient.GetDatabase("LinqProviderDB");
 		db.DropCollection(nameof(Product));
 
 		PrepareData(db);
@@ -35,7 +35,6 @@ public class DbSetTests
 			expected: CollectionProduct.CountDocuments(expr),
 			actual: result.Count);
 	}
-
 
 	[Fact]
 	public void GivenWhenMethod_CheckProductsByExpr_ReturnCorrespondingProductCount__Second()

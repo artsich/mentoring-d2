@@ -6,8 +6,8 @@ namespace _05.LinqProvider.QueryProvider;
 
 public class DbSet<T> : IQueryable<T>
 {
-	protected readonly Expression Expr;
-	protected readonly IQueryProvider QueryProvider;
+	private readonly Expression Expr;
+	private readonly IQueryProvider QueryProvider;
 
 	public DbSet(IMongoDatabase db)
 		: this(new MongoProvider(db))
@@ -24,7 +24,7 @@ public class DbSet<T> : IQueryable<T>
 
 	public Expression Expression => Expr;
 
-	public IQueryProvider Provider => Provider;
+	public IQueryProvider Provider => QueryProvider;
 
 	public IEnumerator<T> GetEnumerator()
 	{
