@@ -73,6 +73,21 @@ public class DbSetTests
 		Assert.Throws<NotSupportedException>(() => set.Where(expr).ToList());
 	}
 
+	[Fact]
+	public void Case5()
+	{
+		Expression<Func<Product, bool>> expr = x => 60 > x.Price;
+
+		var a = CollectionProduct.CountDocuments(expr);
+
+		var set = new DbSet<Product>(db);
+		var result = set.Where(expr).ToList();
+
+		Assert.Equal(
+			expected: CollectionProduct.CountDocuments(expr),
+			actual: result.Count);
+	}
+
 	private static void PrepareData(IMongoDatabase db)
 	{
 		var col = db.GetCollection<Product>(nameof(Product));

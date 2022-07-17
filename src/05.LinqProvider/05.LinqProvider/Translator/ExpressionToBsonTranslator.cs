@@ -35,6 +35,18 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
             throw new NotSupportedException("Left and Right can not be members!");
 		}
 
+        var opMap = new Dictionary<ExpressionType, string>()
+        {
+            { ExpressionType.GreaterThan, "$gt" },
+            { ExpressionType.LessThan, "$lt" }
+        };
+
+        var reverseMap = new Dictionary<ExpressionType, string>()
+        {
+            { ExpressionType.GreaterThan, "$lt" },
+            { ExpressionType.LessThan, "$gt" }
+        };
+
         switch (node.NodeType)
         {
             case ExpressionType.Equal:
@@ -43,19 +55,19 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
                 break;
 
 			case ExpressionType.AndAlso:
-                //CheckBinaryNode(node);
                 AddArrayJson("$and", node);
                 break;
 
-            case ExpressionType.GreaterThan:
-                //CheckBinaryNode(node);
-                AddFieldJson("$gt", node);
-                break;
-
             case ExpressionType.LessThan:
-                //CheckBinaryNode(node);
-                AddFieldJson("$lt", node);
-
+            case ExpressionType.GreaterThan:
+                if (node.Left.NodeType == ExpressionType.Constant)
+				{
+                    AddFieldJson(reverseMap[node.NodeType], node, reversed: true);
+                }
+                else
+				{
+    			    AddFieldJson(opMap[node.NodeType], node);
+				}
                 break;
 
             default:
@@ -87,13 +99,15 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
         query += " ]}";
     }
 
-    private void AddFieldJson(string op, BinaryExpression node)
+    private void AddFieldJson(string op, BinaryExpression node, bool reversed = false)
 	{
-        query += "{";
-        Visit(node.Left);
+        var left = reversed ? node.Right : node.Left;
+        var right = reversed ? node.Left : node.Right;
 
+        query += "{";
+        Visit(left);
         query += $$""" : { "{{op}}": """;
-        Visit(node.Right);
+        Visit(right);
         query += "}}";
     }
 
