@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using System.Linq.Expressions;
 
 namespace _05.LinqProviderTests;
@@ -40,6 +41,20 @@ public class DbSetTests
 	public void GivenWhenMethod_CheckProductsByExpr_ReturnCorrespondingProductCount__Second()
 	{
 		Expression<Func<Product, bool>> expr = x => x.Price < 50 && x.Type == "Type2";
+
+		var set = new DbSet<Product>(db);
+		var result = set.Where(expr).ToList();
+
+		Assert.Equal(
+			expected: CollectionProduct.CountDocuments(expr),
+			actual: result.Count);
+	}
+
+	[Fact]
+	public void SecondCase()
+	{
+		int value = 10;
+		Expression<Func<Product, bool>> expr = x => x.Price > value;
 
 		var set = new DbSet<Product>(db);
 		var result = set.Where(expr).ToList();

@@ -1,40 +1,20 @@
 ﻿using MongoDB.Bson;
-using MongoDB.Driver;
 using System.Linq.Expressions;
+using System.Text;
+using System.Xml.Linq;
 
 namespace _05.LinqProvider.Translator;
 
-internal struct Filter
-{
-    public string Left;
-    public string Op;
-    public object Right;
-
-	public Filter(string left, string op, object right)
-	{
-        Left = left;
-        Op = op;
-        Right = right;
-	}
-}
-
 public class ExpressionToBsonTranslator : ExpressionVisitor
 {
-    private static readonly FilterDefinitionBuilder<BsonDocument> Builder = 
-        Builders<BsonDocument>.Filter;
+    private string query = "";
 
-    private FilterDefinition<BsonDocument> bsonFilter;
-
-    Stack<FilterDefinition<BsonDocument>> left;
-    Stack<FilterDefinition<BsonDocument>> right;
-
-    List<Filter> filters = new ();
-
-    public FilterDefinition<BsonDocument> Translate(Expression exp)
+    public BsonDocument Translate(Expression exp)
     {
-        bsonFilter = Builder.Empty;
+
         Visit(exp);
-        return bsonFilter;
+        var bson = BsonDocument.Parse(query);
+        return bson;
     }
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
@@ -55,26 +35,27 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
         switch (node.NodeType)
         {
             case ExpressionType.Equal:
-                if (node.Left.NodeType != ExpressionType.MemberAccess)
-                    throw new NotSupportedException($"Left operand should be property or field: {node.NodeType}");
+                CheckBinaryNode(node);
+                AddFieldJson("$eq", node);
 
-                if (node.Right.NodeType != ExpressionType.Constant)
-                    throw new NotSupportedException($"Right operand should be constant: {node.NodeType}");
-
-                Visit(node.Left);
-                Visit(node.Right);
-				break;
+                break;
 
 			case ExpressionType.AndAlso:
-                Visit(node.Left);
-                Visit(node.Right);
+                //CheckBinaryNode(node);
+                AddArrayJson("$and", node);
 
-                bsonFilter = left.Pop() & right.Pop();
+                break;
+
+            case ExpressionType.GreaterThan:
+                //CheckBinaryNode(node);
+                AddFieldJson("$gt", node);
+
                 break;
 
             case ExpressionType.LessThan:
-                Visit(node.Left);
-                Visit(node.Right);
+                //CheckBinaryNode(node);
+                AddFieldJson("$lt", node);
+
                 break;
 
             default:
@@ -84,21 +65,57 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
         return node;
     }
 
+    private void CheckBinaryNode(BinaryExpression node)
+    {
+        if (node.Left.NodeType != ExpressionType.MemberAccess)
+            throw new NotSupportedException($"Left operand should be property or field: {node.NodeType}");
+
+        if (node.Right.NodeType != ExpressionType.Constant)
+            throw new NotSupportedException($"Right operand should be constant: {node.NodeType}");
+    }
+
+    private void AddArrayJson(string op, BinaryExpression node)
+	{
+        var sb = new StringBuilder();
+
+        query += "{ \"";
+        query += op;
+        query += "\" : [";
+
+        Visit(node.Left);
+
+        query += ",";
+
+        Visit(node.Right);
+
+        query += " ]";
+        query += "}";
+    }
+
+    private void AddFieldJson(string op, BinaryExpression node)
+	{
+        query += "{";
+        Visit(node.Left);
+        query += " : {\"";
+        query += op;
+        query += "\": ";
+        Visit(node.Right);
+        query += "}";
+        query += "}";
+    }
+
     protected override Expression VisitMember(MemberExpression node)
     {
-        //var filter = filters[filters.Count - 1];
-        //filter.Left = node.Member.Name;
-        //filters[filters.Count - 1] = filter;
-
+        query += $"\"{node.Member.Name}\"";
         return base.VisitMember(node);
     }
 
     protected override Expression VisitConstant(ConstantExpression node)
     {
-        var filter = filters[filters.Count - 1];
-        filter.Right = node.Value ?? throw new ArgumentNullException("Node can not be null!"); ;
-        filters[filters.Count - 1] = filter;
+        var f = Expression.Lambda(node).Compile();
+        var value = f.DynamicInvoke();
 
+        query += $"\"{value}\"";
         return node;
-    }
+	}
 }
