@@ -1,4 +1,3 @@
-using MongoDB.Bson;
 using System.Linq.Expressions;
 
 namespace _05.LinqProviderTests;
@@ -56,12 +55,22 @@ public class DbSetTests
 		int value = 10;
 		Expression<Func<Product, bool>> expr = x => x.Price > value;
 
+		var a = CollectionProduct.CountDocuments(expr);
+
 		var set = new DbSet<Product>(db);
 		var result = set.Where(expr).ToList();
 
 		Assert.Equal(
 			expected: CollectionProduct.CountDocuments(expr),
 			actual: result.Count);
+	}
+
+	[Fact]
+	public void Case4()
+	{
+		Expression<Func<Product, bool>> expr = x => x.Price < x.SecondPrice;
+		var set = new DbSet<Product>(db);
+		Assert.Throws<NotSupportedException>(() => set.Where(expr).ToList());
 	}
 
 	private static void PrepareData(IMongoDatabase db)
@@ -74,43 +83,50 @@ public class DbSetTests
 			{
 				Id = 1,
 				Name = "Name1",
-				Price = 10M,
-				Type = "Type2"
+				Price = 10,
+				Type = "Type2",
+				SecondPrice = 5,
 			},
 			new Product()
 			{
 				Id = 2,
 				Name = "Name2",
-				Price = 60M,
-				Type = "Type2"
+				Price = 60,
+				Type = "Type2",
+				SecondPrice = 12,
 			},
 			new Product()
 			{
 				Id = 3,
 				Name = "Name3",
-				Price = 5M,
-				Type = "Type2"
+				Price = 5,
+				Type = "Type2",
+				SecondPrice = 10,
+
 			},
 			new Product()
 			{
 				Id = 4,
 				Name = "Name4",
-				Price = 40M,
-				Type = "Type1"
+				Price = 40,
+				Type = "Type1",
+				SecondPrice = 10,
 			},
 			new Product()
 			{
 				Id = 5,
 				Name = "Name5",
-				Price = 100M,
-				Type = "Type2"
+				Price = 100,
+				Type = "Type2",
+				SecondPrice = 10,
 			},
 			new Product()
 			{
 				Id = 6,
 				Name = "Name6",
-				Price = 10M,
-				Type = "Type3"
+				Price = 10,
+				Type = "Type3",
+				SecondPrice = 100,
 			},
 		});
 	}

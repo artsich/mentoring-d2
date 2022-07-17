@@ -1,7 +1,5 @@
 ﻿using MongoDB.Bson;
 using System.Linq.Expressions;
-using System.Text;
-using System.Xml.Linq;
 
 namespace _05.LinqProvider.Translator;
 
@@ -11,7 +9,6 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
     public BsonDocument Translate(Expression exp)
     {
-
         Visit(exp);
         var bson = BsonDocument.Parse(query);
         return bson;
@@ -32,24 +29,27 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
     protected override Expression VisitBinary(BinaryExpression node)
     {
+        if (node.Left.NodeType == ExpressionType.MemberAccess &&
+            node.Right.NodeType == ExpressionType.MemberAccess)
+		{
+            throw new NotSupportedException("Left and Right can not be members!");
+		}
+
         switch (node.NodeType)
         {
             case ExpressionType.Equal:
                 CheckBinaryNode(node);
                 AddFieldJson("$eq", node);
-
                 break;
 
 			case ExpressionType.AndAlso:
                 //CheckBinaryNode(node);
                 AddArrayJson("$and", node);
-
                 break;
 
             case ExpressionType.GreaterThan:
                 //CheckBinaryNode(node);
                 AddFieldJson("$gt", node);
-
                 break;
 
             case ExpressionType.LessThan:
@@ -76,11 +76,7 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
     private void AddArrayJson(string op, BinaryExpression node)
 	{
-        var sb = new StringBuilder();
-
-        query += "{ \"";
-        query += op;
-        query += "\" : [";
+        query += $$"""{ "{{op}}": [""";
 
         Visit(node.Left);
 
@@ -88,34 +84,36 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
         Visit(node.Right);
 
-        query += " ]";
-        query += "}";
+        query += " ]}";
     }
 
     private void AddFieldJson(string op, BinaryExpression node)
 	{
         query += "{";
         Visit(node.Left);
-        query += " : {\"";
-        query += op;
-        query += "\": ";
+
+        query += $$""" : { "{{op}}": """;
         Visit(node.Right);
-        query += "}";
-        query += "}";
+        query += "}}";
     }
 
     protected override Expression VisitMember(MemberExpression node)
     {
-        query += $"\"{node.Member.Name}\"";
+        query += $$""" "{{node.Member.Name}}" """;
         return base.VisitMember(node);
     }
 
     protected override Expression VisitConstant(ConstantExpression node)
     {
-        var f = Expression.Lambda(node).Compile();
-        var value = f.DynamicInvoke();
+        if (node.Type == typeof(string))
+		{
+            query += $$""" "{{node.Value}}" """;
+		} 
+        else
+		{
+            query += $$""" {{node.Value}} """;
+        }
 
-        query += $"\"{value}\"";
-        return node;
+        return base.VisitConstant(node);
 	}
 }
