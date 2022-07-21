@@ -52,7 +52,7 @@ public class DbSetTests
 	[Fact]
 	public void SecondCase()
 	{
-		int value = 10;
+		var value = 10;
 		Expression<Func<Product, bool>> expr = x => x.Price > value;
 
 		var a = CollectionProduct.CountDocuments(expr);
