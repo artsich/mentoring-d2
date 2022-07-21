@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 
@@ -93,13 +94,13 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
     }
 
     private void AddFieldJson(string op, BinaryExpression node)
-	{
+    {
         query += "{";
-        Visit(node.Left);
+        Visit(new ReduceConstantVisitor().Visit(node.Left));
         query += " : {\"";
         query += op;
         query += "\": ";
-        Visit(node.Right);
+        Visit(new ReduceConstantVisitor().Visit(node.Right));
         query += "}";
         query += "}";
     }
@@ -112,10 +113,41 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
     protected override Expression VisitConstant(ConstantExpression node)
     {
-        var f = Expression.Lambda(node).Compile();
-        var value = f.DynamicInvoke();
-
-        query += $"\"{value}\"";
+        query += $"\"{node.Value}\"";
         return node;
 	}
+}
+
+class ReduceConstantVisitor : ExpressionVisitor    
+{
+    protected override Expression VisitMember
+        (MemberExpression memberExpression)
+    {
+        // Recurse down to see if we can simplify...
+        var expression = Visit(memberExpression.Expression);
+
+        // If we've ended up with a constant, and it's a property or a field,
+        // we can simplify ourselves to a constant
+        if (expression is ConstantExpression constant)
+        {
+            var container = constant.Value;
+            var member = memberExpression.Member;
+
+            switch (member)
+            {
+                case FieldInfo field:
+                {
+                    var value = field.GetValue(container);
+                    return Expression.Constant(value);
+                }
+                case PropertyInfo property:
+                {
+                    var value = property.GetValue(container, null);
+                    return Expression.Constant(value);
+                }
+            }
+        }
+
+        return base.VisitMember(memberExpression);
+    }
 }
