@@ -2,14 +2,14 @@ using System.Linq.Expressions;
 
 namespace _05.LinqProviderTests;
 
-public class DbSetTests
+public class DbSetWhenMethodTests
 {
-	private readonly string DbName = "Products";
 	private readonly IMongoDatabase db;
+	private readonly string DbName = "Products";
 
 	private IMongoCollection<Product> CollectionProduct => db.GetCollection<Product>(nameof(Product));
 
-	public DbSetTests()
+	public DbSetWhenMethodTests()
 	{
 		var mongoSettings = MongoClientSettings.FromUrl(
 			new MongoUrl("mongodb://localhost:27017")
@@ -24,20 +24,7 @@ public class DbSetTests
 	}
 
 	[Fact]
-	public void GivenWhenMethod_CheckProductsByExpr_ReturnCorrespondingProductCount()
-	{
-		Expression<Func<Product, bool>> expr = x => x.Price > 60;
-
-		var set = new DbSet<Product>(db);
-		var result = set.Where(expr).ToList();
-
-		Assert.Equal(
-			expected: CollectionProduct.CountDocuments(expr),
-			actual: result.Count);
-	}
-
-	[Fact]
-	public void GivenWhenMethod_CheckProductsByExpr_ReturnCorrespondingProductCount__Second()
+	public void CheckProductsByExpr_ReturnCorrespondingProductCount__Second()
 	{
 		Expression<Func<Product, bool>> expr = x => x.Price < 50 && x.Type == "Type2";
 
@@ -50,7 +37,7 @@ public class DbSetTests
 	}
 
 	[Fact]
-	public void SecondCase()
+	public void WhenPropertyGtConsts_Success()
 	{
 		var value = 10;
 		Expression<Func<Product, bool>> expr = x => x.Price > value;
@@ -66,7 +53,7 @@ public class DbSetTests
 	}
 
 	[Fact]
-	public void Case4()
+	public void WhenPropertyLtProperty_ThrowError()
 	{
 		Expression<Func<Product, bool>> expr = x => x.Price < x.SecondPrice;
 		var set = new DbSet<Product>(db);
@@ -74,9 +61,37 @@ public class DbSetTests
 	}
 
 	[Fact]
-	public void Case5()
+	public void WhenPropertyGtConst_Success()
+	{
+		Expression<Func<Product, bool>> expr = x => x.Price > 60;
+
+		var set = new DbSet<Product>(db);
+		var result = set.Where(expr).ToList();
+
+		Assert.Equal(
+			expected: CollectionProduct.CountDocuments(expr),
+			actual: result.Count);
+	}
+
+	[Fact]
+	public void WhenConstGtProperty_Success()
 	{
 		Expression<Func<Product, bool>> expr = x => 60 > x.Price;
+
+		var a = CollectionProduct.CountDocuments(expr);
+
+		var set = new DbSet<Product>(db);
+		var result = set.Where(expr).ToList();
+
+		Assert.Equal(
+			expected: CollectionProduct.CountDocuments(expr),
+			actual: result.Count);
+	}
+
+	[Fact]
+	public void WhenPropertyEqConst_Success()
+	{
+		Expression<Func<Product, bool>> expr = x => x.Price == 60;
 
 		var a = CollectionProduct.CountDocuments(expr);
 

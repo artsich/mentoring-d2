@@ -1,170 +1,143 @@
 ﻿using MongoDB.Bson;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
-using System.Xml.Linq;
 
 namespace _05.LinqProvider.Translator;
 
 public class ExpressionToBsonTranslator : ExpressionVisitor
 {
-    private string query = "";
+	private readonly Dictionary<ExpressionType, string> _opMap = new()
+	{
+		{ ExpressionType.Equal, "$eq" },
+		{ ExpressionType.LessThan, "$lt" },
+		{ ExpressionType.GreaterThan, "$gt" },
+	};
 
-    public BsonDocument Translate(Expression exp)
-    {
-        Visit(exp);
-        var bson = BsonDocument.Parse(query);
-        return bson;
-    }
+	private readonly Dictionary<ExpressionType, string> _reversedOpMap = new()
+	{
+		{ ExpressionType.Equal, "$eq" },
+		{ ExpressionType.LessThan, "$gt" },
+		{ ExpressionType.GreaterThan, "$lt" },
+	};
 
-    protected override Expression VisitMethodCall(MethodCallExpression node)
-    {
-        if (node.Method.DeclaringType == typeof(Queryable)
-            && node.Method.Name == "Where")
-        {
-            var predicate = node.Arguments[1];
-            Visit(predicate);
+	private StringBuilder _query;
 
-            return node;
-        }
-        return base.VisitMethodCall(node);
-    }
+	public BsonDocument Translate(Expression exp)
+	{
+		_query = new StringBuilder();
+		Visit(exp);
+		return BsonDocument.Parse(_query.ToString());
+	}
 
-    protected override Expression VisitBinary(BinaryExpression node)
-    {
-        if (node.Left.NodeType == ExpressionType.MemberAccess &&
-            node.Right.NodeType == ExpressionType.MemberAccess)
+	protected override Expression VisitMethodCall(MethodCallExpression node)
+	{
+		if (node.Method.DeclaringType == typeof(Queryable)
+			&& node.Method.Name == "Where")
 		{
-            throw new NotSupportedException("Left and Right can not be members!");
+			var predicate = node.Arguments[1];
+			Visit(predicate);
+
+			return node;
 		}
 
-        var opMap = new Dictionary<ExpressionType, string>()
-        {
-            { ExpressionType.GreaterThan, "$gt" },
-            { ExpressionType.LessThan, "$lt" }
-        };
+		return base.VisitMethodCall(node);
+	}
 
-        var reverseMap = new Dictionary<ExpressionType, string>()
-        {
-            { ExpressionType.GreaterThan, "$lt" },
-            { ExpressionType.LessThan, "$gt" }
-        };
+	private void CheckBinaryNode(BinaryExpression node)
+	{
+		if (node.Left.NodeType != ExpressionType.MemberAccess)
+			throw new NotSupportedException($"Left operand should be property or field: {node.NodeType}");
 
-        switch (node.NodeType)
-        {
-            case ExpressionType.Equal:
-                CheckBinaryNode(node);
-                AddFieldJson("$eq", node);
-                break;
+		if (node.Right.NodeType != ExpressionType.Constant)
+			throw new NotSupportedException($"Right operand should be constant: {node.NodeType}");
+	}
+
+	protected override Expression VisitBinary(BinaryExpression node)
+	{
+		if (node.Left.NodeType == ExpressionType.MemberAccess &&
+			node.Right.NodeType == ExpressionType.MemberAccess)
+		{
+			throw new NotSupportedException("Left and Right can not be members!");
+		}
+
+		switch (node.NodeType)
+		{
 
 			case ExpressionType.AndAlso:
-                AddArrayJson("$and", node);
-                break;
+				AddArrayJson("$and", node);
+				break;
 
-            case ExpressionType.LessThan:
-            case ExpressionType.GreaterThan:
-                if (node.Left.NodeType == ExpressionType.Constant)
-				{
-                    AddFieldJson(reverseMap[node.NodeType], node);
-                }
-                else
-				{
-    			    AddFieldJson(opMap[node.NodeType], node);
-				}
-                break;
+			case ExpressionType.Equal:
+			case ExpressionType.LessThan:
+			case ExpressionType.GreaterThan:
+				AddFieldJson(node);
+				break;
 
-            default:
-                throw new NotSupportedException($"Operation '{node.NodeType}' is not supported");
-        };
+			default:
+				throw new NotSupportedException($"Operation '{node.NodeType}' is not supported");
+		};
 
-        return node;
-    }
-
-    private void CheckBinaryNode(BinaryExpression node)
-    {
-        if (node.Left.NodeType != ExpressionType.MemberAccess)
-            throw new NotSupportedException($"Left operand should be property or field: {node.NodeType}");
-
-        if (node.Right.NodeType != ExpressionType.Constant)
-            throw new NotSupportedException($"Right operand should be constant: {node.NodeType}");
-    }
-
-    private void AddArrayJson(string op, BinaryExpression node)
-	{
-        query += $$"""{ "{{op}}": [""";
-
-        Visit(node.Left);
-
-        query += ",";
-
-        Visit(node.Right);
-
-        query += " ]}";
-    }
-
-    private void AddFieldJson(string op, BinaryExpression node)
-    {
-        query += "{";
-        Visit(new ReduceConstantVisitor().Visit(node.Left));
-        query += " : {\"";
-        query += op;
-        query += "\": ";
-        Visit(new ReduceConstantVisitor().Visit(node.Right));
-        query += "}";
-        query += "}";
-    }
-
-    protected override Expression VisitMember(MemberExpression node)
-    {
-        query += $$""" "{{node.Member.Name}}" """;
-        return base.VisitMember(node);
-    }
-
-    protected override Expression VisitConstant(ConstantExpression node)
-    {
-        if (node.Type == typeof(string))
-		{
-            query += $$""" "{{node.Value}}" """;
-		} 
-        else
-		{
-            query += $$""" {{node.Value}} """;
-        }
-       
-        return base.VisitConstant(node);
+		return node;
 	}
-}
 
-class ReduceConstantVisitor : ExpressionVisitor    
-{
-    protected override Expression VisitMember
-        (MemberExpression memberExpression)
-    {
-        // Recurse down to see if we can simplify...
-        var expression = Visit(memberExpression.Expression);
+	protected override Expression VisitMember(MemberExpression node)
+	{
+		_query.Append($""" "{node.Member.Name}" """);
+		return base.VisitMember(node);
+	}
 
-        // If we've ended up with a constant, and it's a property or a field,
-        // we can simplify ourselves to a constant
-        if (expression is ConstantExpression constant)
-        {
-            var container = constant.Value;
-            var member = memberExpression.Member;
+	protected override Expression VisitConstant(ConstantExpression node)
+	{
+		if (node.Type == typeof(string))
+		{
+			_query.Append($""" "{node.Value}" """);
+		}
+		else
+		{
+			_query.Append($""" {node.Value} """);
+		}
 
-            switch (member)
-            {
-                case FieldInfo field:
-                {
-                    var value = field.GetValue(container);
-                    return Expression.Constant(value);
-                }
-                case PropertyInfo property:
-                {
-                    var value = property.GetValue(container, null);
-                    return Expression.Constant(value);
-                }
-            }
-        }
+		return base.VisitConstant(node);
+	}
 
-        return base.VisitMember(memberExpression);
-    }
+	private void AddArrayJson(string op, BinaryExpression node)
+	{
+		_query.Append($$"""{ "{{op}}": [""");
+
+		Visit(node.Left);
+
+		_query.Append(',');
+
+		Visit(node.Right);
+
+		_query.Append(" ]}");
+	}
+
+	private void AddFieldJson(BinaryExpression node)
+	{
+		if (node.Left.NodeType == ExpressionType.Constant)
+		{
+			AddFieldJson(_reversedOpMap[node.NodeType], node.Right, node.Left);
+		}
+		else
+		{
+			AddFieldJson(_opMap[node.NodeType], node.Left, node.Right);
+		}
+	}
+
+	private void AddFieldJson(string op, Expression left, Expression right)
+	{
+		var visitor = new ReduceMemberAccessVisitor();
+
+		_query.Append('{');
+
+		Visit(visitor.Visit(left));
+
+		_query.Append(" : {\"");
+		_query.Append(op);
+		_query.Append("\": ");
+
+		Visit(visitor.Visit(right));
+		_query.Append("} }");
+	}
 }
