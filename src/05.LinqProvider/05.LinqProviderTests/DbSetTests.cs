@@ -24,7 +24,7 @@ public class DbSetWhenMethodTests
 	}
 
 	[Fact]
-	public void CheckProductsByExpr_ReturnCorrespondingProductCount__Second()
+	public void CheckProductsByExpr_ReturnCorrespondingProductCount()
 	{
 		Expression<Func<Product, bool>> expr = x => x.Price < 50 && x.Type == "Type2";
 

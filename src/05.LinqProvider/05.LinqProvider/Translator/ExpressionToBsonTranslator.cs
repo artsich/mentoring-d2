@@ -42,16 +42,7 @@ public class ExpressionToBsonTranslator : ExpressionVisitor
 
 		return base.VisitMethodCall(node);
 	}
-
-	private void CheckBinaryNode(BinaryExpression node)
-	{
-		if (node.Left.NodeType != ExpressionType.MemberAccess)
-			throw new NotSupportedException($"Left operand should be property or field: {node.NodeType}");
-
-		if (node.Right.NodeType != ExpressionType.Constant)
-			throw new NotSupportedException($"Right operand should be constant: {node.NodeType}");
-	}
-
+	
 	protected override Expression VisitBinary(BinaryExpression node)
 	{
 		if (node.Left.NodeType == ExpressionType.MemberAccess &&
