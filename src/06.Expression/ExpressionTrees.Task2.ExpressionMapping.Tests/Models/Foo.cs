@@ -1,9 +1,13 @@
-﻿namespace Models
+﻿namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
 {
     internal class Foo
     {
-        public int Id { get; set; }
+        public int IdBar { get; set; }
         
-        public string Name { get; set; }
+        public string NameBar { get; set; }
+        
+        public int Offset { get; set; }
+        
+        public int Number { get; set; }
     }
 }
