@@ -16,6 +16,11 @@ static class Program
 {
     static void Main(string[] args)
     {
+        IncDecCase();
+    }
+
+    static void IncDecCase()
+    {
         Console.WriteLine("Expression Visitor for increment/decrement.");
         Console.WriteLine();
 

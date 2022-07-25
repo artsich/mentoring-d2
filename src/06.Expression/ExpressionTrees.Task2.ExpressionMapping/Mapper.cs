@@ -6,7 +6,7 @@ namespace ExpressionTrees.Task2.ExpressionMapping
     {
         private readonly Func<TSource, TDestination> _mapFunction;
 
-        internal Mapper(Func<TSource, TDestination> func)
+        public Mapper(Func<TSource, TDestination> func)
         {
             _mapFunction = func;
         }
