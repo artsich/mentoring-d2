@@ -35,18 +35,18 @@ public class MapperConfiguration<TSource, TDestination>
         ResetCollections();
     }
 
-    public MapperConfiguration<TSource, TDestination> ForMember<T>(Expression<Func<TSource, T>> source,
-        Expression<Func<TDestination, T>> dest)
+    public MapperConfiguration<TSource, TDestination> ForMember<T>(Expression<Func<TDestination, T>> dest,
+        Expression<Func<TSource, T>> source)
     {
-        var sourceProp = ExpressionHelper.PropertyInfo(source);
-        if (!_overriddenProperties.Add(sourceProp.Name))
+        var destProp = ExpressionHelper.PropertyInfo(dest);
+        if (!_overriddenProperties.Add(destProp.Name))
         {
-            throw new InvalidOperationException($"Property: {sourceProp} already overridden");
+            throw new InvalidOperationException($"Property: {destProp} already configured");
         }
 
-        var destProp = ExpressionHelper.PropertyInfo(dest);
+        var sourceMember = ExpressionHelper.ExprMember(SourceParamExpr, source);
+//        var sourceMember = Expression.PropertyOrField(SourceParamExpr, sourceProp.Name);
 
-        var sourceMember = Expression.PropertyOrField(SourceParamExpr, sourceProp.Name);
         var destMember = Expression.PropertyOrField(DestParamExpr, destProp.Name);
 
         _statements.CreateAssign(destMember, sourceMember);
@@ -55,18 +55,18 @@ public class MapperConfiguration<TSource, TDestination>
     }
 
     public MapperConfiguration<TSource, TDestination> ForMember<TSourceProp, TDestProp>(
-        Expression<Func<TSource, TSourceProp>> source,
         Expression<Func<TDestination, TDestProp>> dest,
+        Expression<Func<TSource, TSourceProp>> source,
         ITypeConverter<TSourceProp, TDestProp> converter)
     {
-        var sourceProp = ExpressionHelper.PropertyInfo(source);
-        if (!_overriddenProperties.Add(sourceProp.Name))
+        var destProp = ExpressionHelper.PropertyInfo(dest);
+        if (!_overriddenProperties.Add(destProp.Name))
         {
-            throw new InvalidOperationException($"Property: {sourceProp} already overridden");
+            throw new InvalidOperationException($"Property: {destProp.Name} already configured");
         }
 
-        var destProp = ExpressionHelper.PropertyInfo(dest);
-        var sourceMember = Expression.PropertyOrField(SourceParamExpr, sourceProp.Name);
+        var sourceMember = ExpressionHelper.ExprMember(SourceParamExpr, source);
+        //var sourceMember = Expression.PropertyOrField(SourceParamExpr, sourceProp.Name);
 
         var converterType = typeof(ITypeConverter<TSourceProp, TDestProp>);
         var convertMethodInfo = converterType
@@ -101,9 +101,9 @@ public class MapperConfiguration<TSource, TDestination>
     private void AddDefaultMappings()
     {
         var notOverriddenSource =
-            SourceProperties
+            DestProperties
                 .Where(name => !_overriddenProperties.Contains(name))
-                .Where(name => DestProperties.Contains(name));
+                .Where(name => SourceProperties.Contains(name));
 
         foreach (var propertyName in notOverriddenSource)
         {

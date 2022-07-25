@@ -9,5 +9,7 @@
         public int Offset { get; set; }
 
         public string Number { get; set; }
+        
+        public string FullName { get; set; }
     }
 }
