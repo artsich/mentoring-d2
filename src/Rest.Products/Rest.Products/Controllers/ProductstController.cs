@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
-using Rest.Products.Models.Category;
 using Rest.Products.Models.Product;
+using Rest.Products.Services;
 
 namespace Rest.Products.Controllers;
 
@@ -9,43 +9,55 @@ namespace Rest.Products.Controllers;
 [Route("api/products")]
 public class ProductsController : ControllerBase
 {
-    public ProductsController(ILogger<ProductsController> logger)
+    private readonly IProductService _productService;
+
+    public ProductsController(IProductService productService, ILogger<ProductsController> logger)
     {
+        _productService = productService;
     }
     
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(uint), (int)HttpStatusCode.BadRequest)]
-    public async Task<ActionResult<IEnumerable<Product>>> Get(int? page, int? size, [FromQuery]Guid[] categoryIds)
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult<IEnumerable<Product>>> GetAll(int? page, int? size, [FromQuery]Guid[]? categoryIds)
     {
-        var result = await Task.FromResult(Enumerable.Empty<Product>());
+        var result = await _productService.GetAll(page, size, categoryIds);
         return Ok(result);
     }
 
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(Product), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult<IEnumerable<Product>>> Get(Guid id)
+    {
+        var result = await _productService.Get(id);
+        return result is null ? BadRequest() : Ok(result);
+    }
+    
     [HttpPost]
     [ProducesResponseType(typeof(Product), (int)HttpStatusCode.Created)]
     [ProducesResponseType(typeof(CreateProduct), (int)HttpStatusCode.BadRequest)]
-    public ActionResult<Product> Post(CreateProduct product)
+    public async Task<ActionResult<Product>> Post(CreateProduct product)
     {
-        var result = new Product(Guid.NewGuid(), product.Name, new Category(product.CategoryId, "Category name", "Category desc"));
-        return Created("", result);
+        var result = await _productService.Create(product);
+        return CreatedAtRoute(new { id = result.Id }, product);      
     }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(UpdateProduct), (int)HttpStatusCode.BadRequest)]
-    public ActionResult<Product> Update(Guid id, UpdateProduct product)
+    public async Task<ActionResult<Product>> Update(Guid id, UpdateProduct product)
     {
-        var result = new Product(id, product.Name, new Category(product.CategoryId, "Category name", "Category desc"));
-        return Ok(result);
+        return Ok(await _productService.Update(id, product));
     }
     
     [HttpDelete("{id:guid}")]
     [ProducesResponseType((int)HttpStatusCode.NoContent)]
     [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(Guid))]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
+        await _productService.Delete(id);
         return NoContent();
     }
 }

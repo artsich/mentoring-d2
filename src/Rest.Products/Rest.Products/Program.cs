@@ -1,8 +1,19 @@
+using Rest.Products.DataAccess;
+using Rest.Products.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddTransient<MongoContext>();
+builder.Services.AddTransient<IProductService, ProductService>();
+
 builder.Services.AddControllers();
+
+// Add settings
+builder.Services.Configure<DatabaseSetting>(
+    builder.Configuration.GetSection(nameof(DatabaseSetting)));
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
