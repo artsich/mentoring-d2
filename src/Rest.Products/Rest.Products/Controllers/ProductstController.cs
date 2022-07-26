@@ -18,7 +18,6 @@ public class ProductsController : ControllerBase
     
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     public async Task<ActionResult<IEnumerable<Product>>> GetAll(int? page, int? size, [FromQuery]Guid[]? categoryIds)
     {
         var result = await _productService.GetAll(page, size, categoryIds);
@@ -27,7 +26,6 @@ public class ProductsController : ControllerBase
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(Product), (int)HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.BadRequest)]
     public async Task<ActionResult<IEnumerable<Product>>> Get(Guid id)
     {
         var result = await _productService.Get(id);
@@ -40,7 +38,7 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<Product>> Post(CreateProduct product)
     {
         var result = await _productService.Create(product);
-        return CreatedAtRoute(new { id = result.Id }, product);      
+        return CreatedAtRoute(new { id = result.Id }, result);      
     }
 
     [HttpPut("{id:guid}")]
@@ -57,7 +55,6 @@ public class ProductsController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(Guid))]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _productService.Delete(id);
-        return NoContent();
+        return await _productService.Delete(id) ? NoContent() : NotFound();
     }
 }

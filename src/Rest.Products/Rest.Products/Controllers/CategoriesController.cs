@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Rest.Products.Models.Category;
+using Rest.Products.Services;
 
 namespace Rest.Products.Controllers;
 
@@ -8,42 +9,53 @@ namespace Rest.Products.Controllers;
 [Route("api/categories")]
 public class CategoriesController : ControllerBase
 {
-    public CategoriesController(ILogger<CategoriesController> logger)
+    private readonly ICategoryService _categoryService;
+
+    public CategoriesController(ICategoryService categoryService)
     {
+        _categoryService = categoryService;
     }
     
     [HttpGet]
     [ProducesResponseType(typeof(uint), (int)HttpStatusCode.BadRequest)]
     public async Task<ActionResult<IEnumerable<Category>>> Get(int? page, int? size)
     {
-        var result = await Task.FromResult(Enumerable.Empty<Category>());
+        var result = await _categoryService.GetAll(page, size);
         return Ok(result);
     }
 
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(Category), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<IEnumerable<Category>>> Get(Guid id)
+    {
+        var result = await _categoryService.Get(id);
+        return result is null ? BadRequest() : Ok(result);
+    }
+    
     [HttpPost]
     [ProducesResponseType(typeof(Category), (int)HttpStatusCode.Created)]
     [ProducesResponseType(typeof(CreateCategory), (int)HttpStatusCode.BadRequest)]
-    public ActionResult<Category> Post(CreateCategory newCategory)
+    public async Task<ActionResult<Category>> Post(CreateCategory category)
     {
-        var result = new Category(Guid.NewGuid(), newCategory.Name, newCategory.Description);
-        return Ok(result);
+        var result = await _categoryService.Create(category);
+        return CreatedAtRoute(new { id = result.Id }, result);      
     }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(Category), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(UpdateCategory), (int)HttpStatusCode.BadRequest)]
-    public ActionResult<Category> Update(Guid id, UpdateCategory category)
+    public async Task<ActionResult<Category>> Update(Guid id, UpdateCategory category)
     {
-        var result = new Category(id, category.Name, category.Description);
-        return Ok();
+        var result = await _categoryService.Update(id, category);
+        return Ok(result);
     }
     
     [HttpDelete("{id:guid}")]
     [ProducesResponseType((int)HttpStatusCode.NoContent)]
     [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(Guid))]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        return NoContent();
+        return await _categoryService.Delete(id) ? NoContent() : NotFound();
     }
 }

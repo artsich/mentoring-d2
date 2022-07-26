@@ -1,3 +1,4 @@
+using FluentValidation.AspNetCore;
 using Rest.Products.DataAccess;
 using Rest.Products.Services;
 
@@ -7,8 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTransient<MongoContext>();
 builder.Services.AddTransient<IProductService, ProductService>();
+builder.Services.AddTransient<ICategoryService, CategoryService>();
 
 builder.Services.AddControllers();
+
+builder.Services.AddFluentValidation(s =>
+{
+    s.RegisterValidatorsFromAssemblyContaining<Program>();
+});
 
 // Add settings
 builder.Services.Configure<DatabaseSetting>(
