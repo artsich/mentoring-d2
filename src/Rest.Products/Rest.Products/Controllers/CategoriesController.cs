@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Rest.Products.Models.Category;
+using Rest.Products.Models.Filter;
 using Rest.Products.Services;
 
 namespace Rest.Products.Controllers;
@@ -17,10 +18,11 @@ public class CategoriesController : ControllerBase
     }
     
     [HttpGet]
-    [ProducesResponseType(typeof(uint), (int)HttpStatusCode.BadRequest)]
-    public async Task<ActionResult<IEnumerable<Category>>> Get(int? page, int? size)
+    [ProducesResponseType(typeof(IEnumerable<Category>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(PageFilter), (int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult<IEnumerable<Category>>> GetAll([FromQuery]PageFilter filter)
     {
-        var result = await _categoryService.GetAll(page, size);
+        var result = await _categoryService.GetAll(filter.Page, filter.Size);
         return Ok(result);
     }
 

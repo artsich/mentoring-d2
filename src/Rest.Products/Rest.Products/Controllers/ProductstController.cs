@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using Rest.Products.Models.Filter;
 using Rest.Products.Models.Product;
 using Rest.Products.Services;
 
@@ -18,9 +19,10 @@ public class ProductsController : ControllerBase
     
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
-    public async Task<ActionResult<IEnumerable<Product>>> GetAll(int? page, int? size, [FromQuery]Guid[]? categoryIds)
+    [ProducesResponseType(typeof(ProductFilter), (int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult<IEnumerable<Product>>> GetAll([FromQuery]ProductFilter filter)
     {
-        var result = await _productService.GetAll(page, size, categoryIds);
+        var result = await _productService.GetAll(filter.Page, filter.Size, filter.CategoryIds);
         return Ok(result);
     }
 
