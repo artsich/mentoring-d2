@@ -14,8 +14,9 @@ public class ProductsController : ControllerBase
     }
     
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(uint), (int)HttpStatusCode.BadRequest)]
-    public async Task<ActionResult<IEnumerable<Product>>> Get(int? page, int? size)
+    public async Task<ActionResult<IEnumerable<Product>>> Get(int? page, int? size, [FromQuery]Guid[] categoryIds)
     {
         var result = await Task.FromResult(Enumerable.Empty<Product>());
         return Ok(result);
