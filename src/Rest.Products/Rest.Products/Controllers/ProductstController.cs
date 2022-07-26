@@ -28,10 +28,11 @@ public class ProductsController : ControllerBase
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(Product), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(Product), (int)HttpStatusCode.NotFound)]
     public async Task<ActionResult<IEnumerable<Product>>> Get(Guid id)
     {
         var result = await _productService.Get(id);
-        return result is null ? BadRequest() : Ok(result);
+        return result is null ? NotFound() : Ok(result);
     }
     
     [HttpPost]

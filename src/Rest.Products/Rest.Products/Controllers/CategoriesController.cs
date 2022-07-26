@@ -28,10 +28,11 @@ public class CategoriesController : ControllerBase
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(Category), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(Category), (int)HttpStatusCode.NotFound)]
     public async Task<ActionResult<IEnumerable<Category>>> Get(Guid id)
     {
         var result = await _categoryService.Get(id);
-        return result is null ? BadRequest() : Ok(result);
+        return result is null ? NotFound() : Ok(result);
     }
     
     [HttpPost]
