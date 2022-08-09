@@ -12,7 +12,7 @@ public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
 
-    public ProductsController(IProductService productService, ILogger<ProductsController> logger)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
     }
@@ -32,7 +32,7 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<IEnumerable<Product>>> Get(Guid id)
     {
         var result = await _productService.Get(id);
-        return result is null ? NotFound() : Ok(result);
+        return Ok(result);
     }
 
     [HttpPost]

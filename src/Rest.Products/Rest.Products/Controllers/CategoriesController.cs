@@ -32,7 +32,7 @@ public class CategoriesController : ControllerBase
     public async Task<ActionResult<IEnumerable<Category>>> Get(Guid id)
     {
         var result = await _categoryService.Get(id);
-        return result is null ? NotFound() : Ok(result);
+        return Ok(result);
     }
     
     [HttpPost]
@@ -60,7 +60,6 @@ public class CategoriesController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         await _categoryService.Delete(id);
-
         return NoContent();
     }
 }
