@@ -59,6 +59,8 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(Guid))]
     public async Task<IActionResult> Delete(Guid id)
     {
-        return await _categoryService.Delete(id) ? NoContent() : NotFound();
+        await _categoryService.Delete(id);
+
+        return NoContent();
     }
 }

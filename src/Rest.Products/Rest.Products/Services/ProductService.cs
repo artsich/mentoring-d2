@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using Rest.Products.DataAccess;
+using Rest.Products.Exceptions;
 using Rest.Products.Models.Product;
 
 namespace Rest.Products.Services;
@@ -35,9 +36,10 @@ public class ProductService : IProductService
         return await query.ToListAsync();
     }
 
-    public async Task<Product?> Get(Guid id)
+    public async Task<Product> Get(Guid id)
     {
-        return await _products.Find(x => x.Id == id).FirstOrDefaultAsync();
+        return await _products.Find(x => x.Id == id).FirstOrDefaultAsync() ??
+            throw new EntityNotFoundException(id);
     }
 
     public async Task<Product> Create(CreateProduct product)
@@ -50,13 +52,23 @@ public class ProductService : IProductService
     public async Task<Product> Update(Guid id, UpdateProduct product)
     {
         var newProduct = new Product(id, product.Name, product.CategoryId);
-        await _products.ReplaceOneAsync(x => x.Id == id, newProduct);
+        var replaceResult = await _products.ReplaceOneAsync(x => x.Id == id, newProduct);
+
+        if (replaceResult.ModifiedCount <= 0)
+		{
+            throw new EntityNotFoundException(id);
+		}
+
         return newProduct;
     }
 
-    public async Task<bool> Delete(Guid id)
+    public async Task Delete(Guid id)
     {
         var result = await _products.DeleteOneAsync(x => x.Id == id);
-        return result.DeletedCount > 0;
+
+        if (result.DeletedCount <= 0)
+		{
+            throw new EntityNotFoundException(id);
+		}
     }
 }

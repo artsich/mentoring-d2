@@ -1,5 +1,6 @@
 using FluentValidation.AspNetCore;
 using Rest.Products.DataAccess;
+using Rest.Products.Middleware;
 using Rest.Products.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.MapControllers();
 

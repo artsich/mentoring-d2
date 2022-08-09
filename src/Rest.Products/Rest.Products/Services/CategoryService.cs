@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using Rest.Products.DataAccess;
+using Rest.Products.Exceptions;
 using Rest.Products.Models.Category;
 using Rest.Products.Models.Product;
 
@@ -33,9 +34,10 @@ public class CategoryService : ICategoryService
         return await query.ToListAsync();
     }
 
-    public async Task<Category?> Get(Guid id)
+    public async Task<Category> Get(Guid id)
     {
-        return await _categories.Find(x => x.Id == id).FirstOrDefaultAsync();
+        return await _categories.Find(x => x.Id == id).FirstOrDefaultAsync() ??
+            throw new EntityNotFoundException(id);
     }
 
     public async Task<Category> Create(CreateCategory category)
@@ -48,11 +50,17 @@ public class CategoryService : ICategoryService
     public async Task<Category> Update(Guid id, UpdateCategory category)
     {
         var newCategory = new Category(id, category.Name, category.Description);
-        await _categories.ReplaceOneAsync(x => x.Id == id, newCategory);
+        var result = await _categories.ReplaceOneAsync(x => x.Id == id, newCategory);
+
+        if (result.ModifiedCount <= 0)
+		{
+            throw new EntityNotFoundException(id);
+        }
+
         return newCategory;
     }
 
-    public async Task<bool> Delete(Guid id)
+    public async Task Delete(Guid id)
     {
         var deleteCategoryTask = _categories.DeleteOneAsync(x => x.Id == id);
         var deleteProductsTask = _products.DeleteManyAsync(x => x.CategoryId == id);
@@ -61,6 +69,9 @@ public class CategoryService : ICategoryService
 
         var deletedCategories = deleteCategoryTask.Result;
         
-        return deletedCategories.DeletedCount > 0;
+        if (deletedCategories.DeletedCount <= 0)
+		{
+            throw new EntityNotFoundException(id);
+		}
     }
 }

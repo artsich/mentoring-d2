@@ -16,11 +16,11 @@ public class ProductsController : ControllerBase
     {
         _productService = productService;
     }
-    
+
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ProductFilter), (int)HttpStatusCode.BadRequest)]
-    public async Task<ActionResult<IEnumerable<Product>>> GetAll([FromQuery]ProductFilter filter)
+    public async Task<ActionResult<IEnumerable<Product>>> GetAll([FromQuery] ProductFilter filter)
     {
         var result = await _productService.GetAll(filter.Page, filter.Size, filter.CategoryIds);
         return Ok(result);
@@ -34,14 +34,14 @@ public class ProductsController : ControllerBase
         var result = await _productService.Get(id);
         return result is null ? NotFound() : Ok(result);
     }
-    
+
     [HttpPost]
     [ProducesResponseType(typeof(Product), (int)HttpStatusCode.Created)]
     [ProducesResponseType(typeof(CreateProduct), (int)HttpStatusCode.BadRequest)]
     public async Task<ActionResult<Product>> Post(CreateProduct product)
     {
         var result = await _productService.Create(product);
-        return CreatedAtRoute(new { id = result.Id }, result);      
+        return CreatedAtRoute(new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
@@ -52,12 +52,13 @@ public class ProductsController : ControllerBase
     {
         return Ok(await _productService.Update(id, product));
     }
-    
+
     [HttpDelete("{id:guid}")]
     [ProducesResponseType((int)HttpStatusCode.NoContent)]
     [ProducesResponseType((int)HttpStatusCode.NotFound, Type = typeof(Guid))]
     public async Task<IActionResult> Delete(Guid id)
     {
-        return await _productService.Delete(id) ? NoContent() : NotFound();
+        await _productService.Delete(id);
+        return NoContent();
     }
 }
