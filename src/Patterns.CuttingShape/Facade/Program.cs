@@ -1,10 +1,21 @@
-﻿new Facade().PlaceOrder("Id1", 20, "my@gmail.com");
+﻿new OrderSysem(
+	new ProductCatalog(),
+	new PaymentSystem(),
+	new InvoiceSystem())
+.PlaceOrder("Id1", 20, "my@gmail.com");
 
-class Facade
+class OrderSysem
 {
-	private readonly ProductCatalog productCatalog = new();
-	private readonly PaymentSystem paymentSystem = new();
-	private readonly InvoiceSystem invoiceSystem = new();
+	private readonly IProductCatalog productCatalog;
+	private readonly IPaymentSystem paymentSystem;
+	private readonly IInvoiceSystem invoiceSystem;
+
+	public OrderSysem(IProductCatalog productCatalog, IPaymentSystem paymentSystem, IInvoiceSystem invoiceSystem)
+	{
+		this.productCatalog = productCatalog;
+		this.paymentSystem = paymentSystem;
+		this.invoiceSystem = invoiceSystem;
+	}
 
 	public void PlaceOrder(string productId, int quantity, string email)
 	{
@@ -24,25 +35,35 @@ public record ProductDetails(string Id, string Name, double Price);
 public record Payment(string ProductId, double Cost);
 public record Invoice(string ProductName, int Quantity, double Cost, string Email);
 
-class ProductCatalog
+interface IProductCatalog
 {
-	public ProductDetails GetProductDetails(string productId)
-	{
-		return new ProductDetails("Id1", "Milk", 100);
-	}
+	ProductDetails GetProductDetails(string productId);
 }
 
-class PaymentSystem
+interface IPaymentSystem
 {
-    public bool MakePayment(Payment payment)
-	{
-		return true;
-	}
+	bool MakePayment(Payment payment);
 }
 
-class InvoiceSystem
+interface IInvoiceSystem
 {
-    public void SendInvoice(Invoice invoice)
+	void SendInvoice(Invoice invoice);
+}
+
+public class ProductCatalog : IProductCatalog
+{
+	public ProductDetails GetProductDetails(string productId) =>
+		new("Id1", "Milk", 100);
+}
+
+public class PaymentSystem : IPaymentSystem
+{
+	public bool MakePayment(Payment payment) => true;
+}
+
+public class InvoiceSystem : IInvoiceSystem
+{
+	public void SendInvoice(Invoice invoice)
 	{
 		Console.WriteLine($@"
 Email: {invoice.Email}
@@ -50,6 +71,5 @@ ProductName: {invoice.ProductName}
 Quantity: {invoice.Quantity}
 Cost: {invoice.Cost}
 ");
-
 	}
 }

@@ -57,7 +57,7 @@ public class Form : IXmlElement
 		var body = "\t" + string.Join("\n\t", elements.Select(x => x.ConvertToString()));
 
 		return $@"
-<form name='{name}>
+<form name='{name}'>
 {body}
 </form>";
 	}
