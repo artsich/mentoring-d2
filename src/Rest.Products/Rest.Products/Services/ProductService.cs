@@ -9,7 +9,7 @@ public class ProductService : IProductService
 {
     private readonly IMongoCollection<Product> _products;
 
-    public ProductService(MongoContext context)
+    public ProductService(IMongoContext context)
     {
         _products = context.Collection<Product>();
     }

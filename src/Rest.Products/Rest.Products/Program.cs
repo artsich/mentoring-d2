@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddTransient<MongoContext>();
+builder.Services.AddTransient<IMongoContext, MongoContext>();
 builder.Services.AddTransient<IProductService, ProductService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
 

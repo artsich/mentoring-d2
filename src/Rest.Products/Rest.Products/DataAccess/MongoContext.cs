@@ -12,7 +12,12 @@ public class DatabaseSetting
     public string[] Collections { get; set; } = Array.Empty<string>();
 }
 
-public class MongoContext
+public interface IMongoContext
+{
+    IMongoCollection<T> Collection<T>();
+}
+
+public class MongoContext : IMongoContext
 {
     private readonly IOptions<DatabaseSetting> _settings;
     private readonly IMongoDatabase _database;

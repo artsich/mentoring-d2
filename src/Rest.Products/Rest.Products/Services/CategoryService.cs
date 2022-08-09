@@ -11,7 +11,7 @@ public class CategoryService : ICategoryService
     private readonly IMongoCollection<Category> _categories;
     private readonly IMongoCollection<Product> _products;
 
-    public CategoryService(MongoContext context)
+    public CategoryService(IMongoContext context)
     {
         _categories = context.Collection<Category>();
         _products = context.Collection<Product>();
